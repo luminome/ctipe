@@ -63,7 +63,7 @@ const vars = {
     time_string: null,
     pings: 0,
     ping_delay: 10*60,
-    max_history: 3,///288, //two days of data.
+    max_history: 288, //two days of data.
     files_arr: [],
     timer:() => {
         vars.pings++;
@@ -86,7 +86,8 @@ const process = (res, query, data) => {
 
     if(query.hasOwnProperty('manifest')){
         const result = {
-            data: vars.files_arr.map(fa => fa.name)
+            data: vars.files_arr.map(fa => fa.name),
+            stat: vars.files_arr.length+' items'
         }
         res.json(result);
     }else{
