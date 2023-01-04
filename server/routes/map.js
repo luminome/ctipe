@@ -5,6 +5,40 @@ const fs = require('fs');
 
 const loader = require('../request');
 
+function traverse(){
+    //passsing directoryPath and callback function
+    fs.readdir(vars.data_store, function (err, files) {
+        //handling error
+        if (err) {
+            return console.log('Unable to scan directory: ' + err);
+        }
+        vars.files_arr = [];
+        //listing all files using forEach
+        files.forEach(function (file) {
+            // Do whatever you want to do with the file
+            const file_path = `${vars.data_store}/${file}`;
+            const t_dat = new Date(createdDate(file_path));
+            const lex = {name:file, path:file_path, time:t_dat.valueOf()}
+            vars.files_arr.push(lex);
+        });
+
+        vars.files_arr.sort((a, b) => a.time < b.time ? 1 : -1).map((f,i) => {
+            if(i > vars.max_history-1){
+                ///console.log('delete',f,i);
+                fs.unlink(f.path, (err) => {
+                  if (err) {
+                    console.error(err);
+                  }
+                  //file removed`
+                })
+            }
+        });
+
+        vars.files_arr.splice(vars.max_history, vars.files_arr.length);
+
+    });
+}
+
 function load_complete(res){
     const clean = res[0].raw.split(/\s*[\s]\s*/);
     const t_sta = clean.slice(1,6).join('-');
@@ -17,6 +51,7 @@ function load_complete(res){
       }
     });
 
+    traverse();
 }
 
 const vars = {
@@ -27,8 +62,8 @@ const vars = {
     delta_time: null,
     time_string: null,
     pings: 0,
-    ping_delay: 5*60,
-    max_history:6, //288, //two days of data.
+    ping_delay: 10*60,
+    max_history: 3,///288, //two days of data.
     files_arr: [],
     timer:() => {
         vars.pings++;
@@ -44,46 +79,14 @@ function createdDate (file) {
 }
 
 
-function traverse(){
-    //passsing directoryPath and callback function
-    fs.readdir(vars.data_store, function (err, files) {
-        //handling error
-        if (err) {
-            return console.log('Unable to scan directory: ' + err);
-        }
-        vars.files_arr = [];
-        //listing all files using forEach
-        files.forEach(function (file) {
-            // Do whatever you want to do with the file
-            const file_path = `${vars.data_store}/${file}`;
-            const t_dat = new Date(createdDate(file_path));
-            const lex = {path:file_path, time:t_dat.valueOf()}
-            vars.files_arr.push(lex);
-        });
 
-        vars.files_arr.sort((a, b) => a.time < b.time ? 1 : -1).map((f,i) => {
-            if(i+1 > vars.max_history){
-                ///console.log('delete',f,i);
-                fs.unlink(f.path, (err) => {
-                  if (err) {
-                    console.error(err);
-                  }
-                  //file removed
-                })
-            }
-        });
-
-        vars.files_arr.splice(vars.max_history+1, vars.files_arr.length-1);
-
-    });
-}
 
 
 const process = (res, query, data) => {
 
     if(query.hasOwnProperty('manifest')){
         const result = {
-            manifest: vars.files_arr
+            data: vars.files_arr.map(fa => fa.name)
         }
         res.json(result);
     }else{
@@ -116,7 +119,7 @@ router.get('/', function (req, res, next) {
             (vars.call_time.getHours()+offset),
             vars.call_time.getMinutes()].join('-');
 
-        traverse();
+
 
         return process(res, req.query, data);
     } catch (err) {

@@ -4,7 +4,7 @@ const config = require('./config');
 const package_detail = require('../package.json');
 const port = process.env.PORT || config.default_port;
 
-//app.use(express.static('dist'));
+app.use(express.static('assets'));
 
 const map_router = require('./routes/map');
 
