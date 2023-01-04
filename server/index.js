@@ -3,6 +3,8 @@ const app = express();
 const config = require('./config');
 const package_detail = require('../package.json');
 const port = process.env.PORT || config.default_port;
+const cors = require('cors')
+app.use(cors())
 
 app.use(express.static('assets'));
 
