@@ -31572,7 +31572,7 @@ function keyControls(root_surface, keyAction, kva) {
 }
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"5oERU"}],"bFTcl":[function(require,module,exports) {
-module.exports = JSON.parse('{"name":"ctipe-runtime","version":"1.0.0","description":"","source":"src/index.html","browserslist":"> 0.5%, last 2 versions, not dead","scripts":{"build-watch":"parcel watch ./src/index.html","start-watch":"nodemon server/index.js","dev":"concurrently --kill-others \\"npm run start-watch\\" \\"npm run build-watch\\"","build":"parcel build ./src/index.html","start":"npm run build && node server/index.js","test":"echo \\"Error: no test specified\\" && exit 1"},"keywords":[],"author":"","license":"ISC","dependencies":{"concurrently":"^7.6.0","express":"^4.18.2","nodemon":"^2.0.20","parcel":"^2.8.2","three":"^0.148.0"}}');
+module.exports = JSON.parse('{"name":"ctipe-runtime","version":"1.0.0","description":"","source":"src/index.html","browserslist":"> 0.5%, last 2 versions, not dead","scripts":{"build-watch":"parcel watch ./src/index.html","start-watch":"nodemon server/index.js","dev":"concurrently --kill-others \\"npm run start-watch\\" \\"npm run build-watch\\"","build":"parcel build ./src/index.html","start":"node server/index.js --omit=dev","test":"echo \\"Error: no test specified\\" && exit 1"},"keywords":[],"author":"","license":"ISC","dependencies":{"concurrently":"^7.6.0","express":"^4.18.2","nodemon":"^2.0.20","parcel":"^2.8.2","three":"^0.148.0"}}');
 
 },{}]},["jMtPC","2aAMz"], "2aAMz", "parcelRequire8801")
 
