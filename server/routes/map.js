@@ -105,8 +105,13 @@ const process = (res, query, data) => {
     //console.log(`${package_detail.name} api process was called.`);
 }
 
+const corsOptions = {
+  origin: 'localhost/*',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
 /* GET quotes listing. */
-router.get('/', cors(), function (req, res, next) {
+router.get('/', cors(corsOptions), function (req, res, next) {
     try {
         const data = null;//map_service.get_all(req.query);
         if(vars.start_time === null){
