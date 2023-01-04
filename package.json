@@ -1,7 +1,7 @@
 {
   "name": "ctipe-runtime",
   "version": "1.0.0",
-  "description": "",
+  "description": "A getter app for CTIPe data acquisition and storage at railway.com",
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "scripts": {
     "start-watch": "nodemon server/index.js --ignore './assets/*.json'",
@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "node-fetch": "^3.3.0",
     "nodemon": "^2.0.20"

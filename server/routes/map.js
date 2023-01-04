@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+
+const cors = require('cors');
+
 const package_detail = require('../../package.json');
 const fs = require('fs');
 
@@ -103,7 +106,7 @@ const process = (res, query, data) => {
 }
 
 /* GET quotes listing. */
-router.get('/', function (req, res, next) {
+router.get('/', cors(), function (req, res, next) {
     try {
         const data = null;//map_service.get_all(req.query);
         if(vars.start_time === null){
