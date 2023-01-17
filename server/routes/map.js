@@ -160,7 +160,7 @@ const vars = {
     time_string: null,
     server_time: new Date(),
     pings: 0,
-    ping_delay: 10*60,
+    ping_delay: 8*60,
     max_history: 576, //4 days 288, //two days of data.
     files_arr: [],
 	test: false,
