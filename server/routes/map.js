@@ -4,9 +4,94 @@ const router = express.Router();
 const cors = require('cors');
 
 const package_detail = require('../../package.json');
+const config = require('./../config');
 const fs = require('fs');
 
 const loader = require('../request');
+
+
+const auto_load = {
+    count: 0,
+    in_queue: 0,
+    bytes_loaded: 0,
+    delta_time: 0,
+    manifest_data: [],
+    load_index: 0,
+    limit: null,
+    complete(resource, cat){
+
+        console.log(resource);
+
+
+        const res = resource[0];
+
+        if(cat === 'manifest'){
+
+
+            console.log(res, typeof resource[0].raw.data);
+
+            const r = res.raw.data;
+
+            auto_load.manifest_data = r.map((obj_str,id) => {
+                const var_id = obj_str.split('.')[0];
+                return {url:config.assets_path+obj_str, variable:var_id, size:'loading', type:'json', cat:'asset', id:(r.length-1)-id}
+            })
+
+            console.log('manifest loaded', auto_load.manifest_data.length);
+            if(auto_load.limit !== null) auto_load.manifest_data.splice(auto_load.limit, auto_load.manifest_data.length);
+
+            auto_load.in_queue = auto_load.manifest_data.length;
+            auto_load.manifest_data.reverse();
+            auto_load.count = 0;
+
+            auto_load.load_asset(0);
+            ///console.log('loaded manifest', auto_load.manifest_data);
+        }
+
+        if(cat === 'asset'){
+
+            console.log('asset loaded', res.variable);
+
+            const datum = JSON.stringify(res.raw);
+            fs.writeFile(`${vars.data_store}/${res.variable}.json`, datum, {flag:'w+'}, err => {
+              if (err) {
+                console.error(err);
+              }
+            });
+
+            auto_load.load_index++;
+            if(auto_load.load_index < auto_load.in_queue){
+                auto_load.load_asset(auto_load.load_index);
+            }else{
+                console.log('assets were loaded');
+            }
+        }
+
+        return true;
+    },
+    status(count, obj){
+        console.log(obj.variable, auto_load.count, 'of', auto_load.in_queue);
+        if(count === -1){
+            auto_load.count ++;
+        }
+    },
+    load_manifest(){
+        const queue = [{url:`${config.manifest_path}`, variable:'manifest', size:'loading', type:'json', cat:'manifest', id:0}];
+        auto_load.in_queue = (queue.length);
+        loader(queue, auto_load.status).then(r => auto_load.complete(r, 'manifest'));
+    },
+    load_asset(index){
+        const queue = [auto_load.manifest_data[index]];
+        loader(queue, auto_load.status).then(r => auto_load.complete(r,'asset'));
+    }
+}
+
+
+
+
+
+
+
 
 function traverse(){
     //passsing directoryPath and callback function
@@ -45,9 +130,14 @@ function traverse(){
 function load_complete(res){
     const clean = res[0].raw.split(/\s*[\s]\s*/);
     const t_sta = clean.slice(1,6).join('-');
-    const values = clean.slice(7, clean.length).map(d => Number(d));
+    const values = clean.slice(6, clean.length-1).map(d => Number(d));
+	
+	if(vars.test){
+        vars.test_output = [t_sta, values[0], values[values.length-1], values.length];
+        return;
+    }
+	
     const datum = JSON.stringify({"data":values});
-
     fs.writeFile(`${vars.data_store}/${t_sta}.json`, datum, {flag:'w+'}, err => {
       if (err) {
         console.error(err);
@@ -58,6 +148,7 @@ function load_complete(res){
 }
 
 const vars = {
+    req_ip: null,
     data_path: 'https://services.swpc.noaa.gov/experimental/text/ctipe-tec-output.txt',
     data_store: './assets',
     call_time: null,
@@ -66,8 +157,10 @@ const vars = {
     time_string: null,
     pings: 0,
     ping_delay: 10*60,
-    max_history: 288, //two days of data.
+    max_history: 576, //4 days 288, //two days of data.
     files_arr: [],
+	test: false,
+    test_output:null,
     timer:() => {
         vars.pings++;
         loader([{url:vars.data_path}]).then(r => load_complete(r));
@@ -87,7 +180,31 @@ function createdDate (file) {
 
 const process = (res, query, data) => {
 
-    if(query.hasOwnProperty('manifest')){
+
+    if(query.hasOwnProperty('load') && vars.req_ip ==='::1'){
+        console.log(`${package_detail.name} api load was called.`);
+        auto_load.load_manifest();
+        const result = {
+            message:`${package_detail.name} api load was called.`,
+            query:query,
+            vars: vars
+        }
+        res.json(result);
+
+    }else if(query.hasOwnProperty('test') && vars.req_ip ==='::1'){
+		console.log(`${package_detail.name} api test was called.`);
+		vars.test = true;
+		loader([{url:vars.data_path}]).then(r => load_complete(r));
+		
+        const result = {
+            message:`${package_detail.name} api test was called.`,
+            value:vars.test_output,
+            query:query,
+            vars: vars
+        }
+        res.json(result);
+		
+	}else if(query.hasOwnProperty('manifest')){
         const result = {
             data: vars.files_arr.map(fa => fa.name),
             stat: vars.files_arr.length+' items'
@@ -106,7 +223,7 @@ const process = (res, query, data) => {
 }
 
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000','https://scottandrecampbell.com'],
   methods: "GET,HEAD",
   preflightContinue: true,
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
@@ -115,6 +232,8 @@ const corsOptions = {
 /* GET quotes listing. */
 router.get('/', cors(corsOptions), function (req, res, next) {
     try {
+        vars.req_ip = req.ip;
+
         const data = null;//map_service.get_all(req.query);
         if(vars.start_time === null){
             vars.timer();

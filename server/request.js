@@ -7,7 +7,8 @@ async function loader(resource_obj_list) {
 		let ref = fetch(obj.url)
 		.then(response => response.text())
 		.then(function (text) {
-			return (text); //JSON.parse
+			//return (text); //JSON.parse
+			return obj.type === 'json' ? JSON.parse(text) : text;
 		})
 		.catch((error) => {
 			console.log(error.status, error);
