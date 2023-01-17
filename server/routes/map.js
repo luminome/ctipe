@@ -105,17 +105,17 @@ function traverse(){
         files.forEach(function (file) {
             // Do whatever you want to do with the file
             const file_path = `${vars.data_store}/${file}`;
-            const file_time = file.split('.')[0];
-            const t_dat = get_ms_from_dateStamp(file_time);
-            const lex = {name:file, path:file_path, time:t_dat};
-            // const t_dat = new Date(createdDate(file_path));
-            // const lex = {name:file, path:file_path, time:t_dat.valueOf()}
+            // const file_time = file.split('.')[0];
+            // const t_dat = get_ms_from_dateStamp(file_time);
+            // const lex = {name:file, path:file_path, time:t_dat};
+            const t_dat = new Date(createdDate(file_path));
+            const lex = {name:file, path:file_path, time:t_dat.valueOf()};
             vars.files_arr.push(lex);
         });
 
         vars.files_arr.sort((a, b) => a.time < b.time ? 1 : -1).map((f,i) => {
             if(i > vars.max_history-1){
-                ///console.log('delete',f,i);
+                console.log('deleted',f,i);
                 fs.unlink(f.path, (err) => {
                   if (err) {
                     console.error(err);
@@ -136,10 +136,11 @@ function load_complete(res){
 	
 	if(vars.test){
         vars.test_output = [t_sta, values[0], values[values.length-1], values.length];
+        traverse();
         return;
     }
 	
-    const datum = JSON.stringify({"data":values});
+    const datum = JSON.stringify({"data":values, "ctime":vars.server_time.valueOf()});
     fs.writeFile(`${vars.data_store}/${t_sta}.json`, datum, {flag:'w+'}, err => {
       if (err) {
         console.error(err);
@@ -157,6 +158,7 @@ const vars = {
     start_time: null,
     delta_time: null,
     time_string: null,
+    server_time: new Date(),
     pings: 0,
     ping_delay: 10*60,
     max_history: 576, //4 days 288, //two days of data.
@@ -165,6 +167,7 @@ const vars = {
     test_output:null,
     timer:() => {
         vars.pings++;
+        vars.server_time = new Date();
         loader([{url:vars.data_path}]).then(r => load_complete(r));
         setTimeout(() => vars.timer(), vars.ping_delay*1000);
     }
@@ -172,11 +175,12 @@ const vars = {
 
 const vars_sanitized = () =>{
     const diagonal = {};
-    const omitted = ['test','test_output','data_store','files_arr','timer'];
+    const omitted = ['test','test_output','data_store','files_arr','timer','server_time'];
     Object.keys(vars).map(k =>{
         if(!omitted.includes(k)) diagonal[k] = vars[k];
     });
     diagonal.file_count = vars.files_arr.length;
+    diagonal.server_time = vars.server_time.valueOf();
     return diagonal;
 }
 
