@@ -105,8 +105,11 @@ function traverse(){
         files.forEach(function (file) {
             // Do whatever you want to do with the file
             const file_path = `${vars.data_store}/${file}`;
-            const t_dat = new Date(createdDate(file_path));
-            const lex = {name:file, path:file_path, time:t_dat.valueOf()}
+            const file_time = file.split('.')[0];
+            const t_dat = get_ms_from_dateStamp(file_time);
+            const lex = {name:file, path:file_path, time:t_dat};
+            // const t_dat = new Date(createdDate(file_path));
+            // const lex = {name:file, path:file_path, time:t_dat.valueOf()}
             vars.files_arr.push(lex);
         });
 
@@ -117,7 +120,6 @@ function traverse(){
                   if (err) {
                     console.error(err);
                   }
-                  //file removed`
                 })
             }
         });
@@ -168,14 +170,34 @@ const vars = {
     }
 }
 
+const vars_sanitized = () =>{
+    const diagonal = {};
+    const omitted = ['test','test_output','data_store','files_arr','timer'];
+    Object.keys(vars).map(k =>{
+        if(!omitted.includes(k)) diagonal[k] = vars[k];
+    });
+    diagonal.file_count = vars.files_arr.length;
+    return diagonal;
+}
+
 
 function createdDate (file) {
   const { birthtime } = fs.statSync(file)
   return birthtime
 }
 
-
-
+const get_ms_from_dateStamp = (t) => {
+    const d_arr = t.split('-');
+    const d = {
+        month: d_arr[0]-1,
+        day: d_arr[1],
+        year: d_arr[2],
+        hour: d_arr[3],
+        minute: d_arr[4]
+    }
+    const dd = new Date(d.year, d.month, d.day, d.hour, d.minute, 0.0, 0.0);
+    return dd.getTime();
+}
 
 
 const process = (res, query, data) => {
@@ -187,12 +209,14 @@ const process = (res, query, data) => {
         const result = {
             message:`${package_detail.name} api load was called.`,
             query:query,
-            vars: vars
+            vars: vars_sanitized()
         }
         res.json(result);
 
     }else if(query.hasOwnProperty('test') && vars.req_ip ==='::1'){
 		console.log(`${package_detail.name} api test was called.`);
+        console.log(get_ms_from_dateStamp('1-17-2023-22-30'));
+
 		vars.test = true;
 		loader([{url:vars.data_path}]).then(r => load_complete(r));
 		
@@ -200,11 +224,13 @@ const process = (res, query, data) => {
             message:`${package_detail.name} api test was called.`,
             value:vars.test_output,
             query:query,
-            vars: vars
+            vars: vars_sanitized()
         }
         res.json(result);
 		
 	}else if(query.hasOwnProperty('manifest')){
+        //get sorty...
+        //vars.files_arr.sort((a, b) => a.time < b.time ? 1 : -1);
         const result = {
             data: vars.files_arr.map(fa => fa.name),
             stat: vars.files_arr.length+' items'
@@ -214,7 +240,7 @@ const process = (res, query, data) => {
         const result = {
             value:data,
             query:query,
-            vars: vars
+            vars: vars_sanitized()
         }
         res.json(result);
     }
