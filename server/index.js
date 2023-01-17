@@ -12,7 +12,7 @@ const map_router = require('./routes/map');
 
 app.use('/m', map_router);
 
-//app.set('json spaces', 2);
+app.set('json spaces', 2);
 
 app.listen(port, () => {
   console.log(`${package_detail.name} app listening at http://localhost:${port}`);
