@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const cors = require('cors');
 
 const package_detail = require('../../package.json');
@@ -160,7 +159,7 @@ const vars = {
     time_string: null,
     server_time: new Date(),
     pings: 0,
-    ping_delay: 8*60,
+    ping_delay: 5*60,
     max_history: 576, //4 days 288, //two days of data.
     files_arr: [],
 	test: false,
@@ -219,11 +218,16 @@ const process = (res, query, data) => {
 
     }else if(query.hasOwnProperty('test') && vars.req_ip ==='::1'){
 		console.log(`${package_detail.name} api test was called.`);
-        console.log(get_ms_from_dateStamp('1-17-2023-22-30'));
 
-		vars.test = true;
-		loader([{url:vars.data_path}]).then(r => load_complete(r));
-		
+		// vars.test = true;
+		// loader([{url:vars.data_path}]).then(r => load_complete(r));
+
+        // cron.schedule('* * * * *', function() {
+        //   console.log('running a task every 1 minutes',vars.cron_pings);
+        //   vars.cron_pings ++;
+        // });
+
+
         const result = {
             message:`${package_detail.name} api test was called.`,
             value:vars.test_output,
